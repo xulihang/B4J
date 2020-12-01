@@ -1,0 +1,167 @@
+﻿AppType=JavaFX
+Build1=Default,b4j.example
+File1=main.bjl
+FileGroup1=Default Group
+Group=Default Group
+Library1=jcore
+Library2=jfx
+Library3=javaobject
+Library4=xui views
+Library5=json
+Library6=jkmeans
+NumberOfFiles=1
+NumberOfLibraries=6
+NumberOfModules=0
+Version=7.8
+@EndOfDesignText@
+#Region Project Attributes 
+	#MainFormWidth: 600
+	#MainFormHeight: 600 
+#End Region
+
+Sub Process_Globals
+	Private fx As JFX
+	Private MainForm As Form
+	Private ImageView1 As ImageView
+	Private ListView1 As ListView
+	Private TextField1 As TextField
+	Private ImageView2 As ImageView
+End Sub
+
+Sub AppStart (Form1 As Form, Args() As String)
+	MainForm = Form1
+	MainForm.RootPane.LoadLayout("main") 'Load the layout file.
+	MainForm.Show
+	TextField1.Text=3
+	ImageView1.PreserveRatio=True
+	ImageView1.SetImage(fx.LoadImage(File.DirApp,"test.jpg"))
+End Sub
+
+'Return true to allow the default exceptions handler to handle the uncaught exception.
+Sub Application_Error (Error As Exception, StackTrace As String) As Boolean
+	Return True
+End Sub
+
+Sub ImageView1_MouseClicked (EventData As MouseEvent)
+	Dim fc As FileChooser
+	fc.Initialize
+	Dim path As String=fc.ShowOpen(MainForm)
+	Try
+		ImageView1.SetImage(fx.LoadImage(path,""))
+	Catch
+		Log(LastException)
+	End Try
+End Sub
+
+Sub Button1_MouseClicked (EventData As MouseEvent)
+	Dim data As List
+	data.Initialize
+	Dim pixels As List
+	pixels.Initialize
+	Dim img1 As B4XBitmap=ImageView1.GetImage
+	Dim img As Image=img1.Resize(200,200,False)
+	For x=0 To img.Width-1
+		For y=0 To img.Height-1
+			Dim pixel As Int=img.GetPixel(x,y)
+			Dim rgb() As Int = GetRGB(pixel)
+			Dim r,g,b As Double
+			r=rgb(0)
+			g=rgb(1)
+			b=rgb(2)
+			Dim rgbMap As Map
+			rgbMap.Initialize
+			rgbMap.Put("r",r)
+			rgbMap.Put("g",g)
+			rgbMap.Put("b",b)
+			Dim record As KMeansRecord
+			record.Initialize(rgbMap)
+			data.Add(record)
+		Next
+	Next
+	ListView1.Items.Clear
+	cluster(TextField1.Text,data)
+End Sub
+
+'data includes lists of data
+Sub cluster(clusterNumber As Int,data As List)
+	
+	Dim km As KMeans
+	km.Initialize
+	Dim clusters As Map=km.fit(data,clusterNumber,1000)
+	Log(clusters)
+	Dim mostSize As Int=0
+	Dim mostCentroid As KMeansCentroid
+	For i=0 To clusters.Size-1
+		Dim centroid As KMeansCentroid=clusters.GetKeyAt(i)
+		Dim cluster1 As List = clusters.GetValueAt(i)
+		If mostSize=0 Then
+			mostSize=cluster1.Size
+			mostCentroid=clusters.GetKeyAt(i)
+		End If
+		If cluster1.Size>mostSize Then
+			mostSize=cluster1.Size
+			mostCentroid=clusters.GetKeyAt(i)
+		End If
+		
+        Dim rgb As Map=centroid.Coordinates
+		Dim img As Image=colorImage(rgb.Get("r"),rgb.Get("g"),rgb.Get("b"))
+		Dim iv As ImageView
+		iv.Initialize("")
+		iv.SetImage(img)
+		ListView1.Items.Add(iv)
+	Next
+	
+	If mostCentroid.IsInitialized Then
+		Log(mostSize)
+		Log(mostCentroid)
+		Dim rgb As Map=mostCentroid.Coordinates
+		Dim img As Image=colorImage(rgb.Get("r"),rgb.Get("g"),rgb.Get("b"))
+		ImageView2.SetImage(img)
+		ImageView2.Height=50
+	End If
+End Sub
+
+
+
+Sub GetRGB(color As Int) As Int()
+	Dim res(3) As Int
+	'res(0) = Bit.UnsignedShiftRight(Bit.And(Color, 0xff000000), 24)
+	res(0) = Bit.UnsignedShiftRight(Bit.And(color, 0xff0000), 16)
+	res(1) = Bit.UnsignedShiftRight(Bit.And(color, 0xff00), 8)
+	res(2) = Bit.And(color, 0xff)
+	Return res
+End Sub
+
+Sub colorImage(r As Int,g As Int,b As Int) As Image
+	Dim xui As XUI
+	Dim rect As B4XRect
+	rect.Initialize(0,0,ListView1.Width,50)
+	Dim bc As BitmapCreator
+	bc.Initialize(ListView1.PrefWidth-20,50)
+	bc.DrawRect(rect,xui.Color_ARGB(255,r,g,b),True,1)
+	Return bc.Bitmap
+End Sub
+
+Sub getRGBAWT(color As Int) As Int()
+	Dim colorJO As JavaObject
+	colorJO.InitializeNewInstance("java.awt.Color",Array(color))
+	Dim rgb(3) As Int
+	rgb(0)=colorJO.RunMethod("getRed",Null)
+	rgb(1)=colorJO.RunMethod("getGreen",Null)
+	rgb(2)=colorJO.RunMethod("getBlue",Null)
+	Return rgb
+End Sub
+
+Sub HSB2RGB(h As Float,s As Float,b As Float) As Int
+	Dim jo As JavaObject
+	jo.InitializeStatic("java.awt.Color")
+	Dim rgb As Int = jo.RunMethod("HSBtoRGB",Array(h,s,b))
+	Return rgb
+End Sub
+
+Sub RGB2HSB(r As Int,g As Int,b As Int) As Float()
+	Dim jo As JavaObject
+	jo.InitializeStatic("java.awt.Color")
+	Dim hsv() As Float = jo.RunMethod("RGBtoHSB",Array(r,g,b,Null))
+	Return hsv
+End Sub

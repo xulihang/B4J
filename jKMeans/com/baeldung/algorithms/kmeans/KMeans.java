@@ -17,15 +17,15 @@ import static java.util.stream.Collectors.toSet;
  */
 public class KMeans {
 
-    private KMeans() {
-        throw new IllegalAccessError("You shouldn't call this constructor");
+    public KMeans() {
+
     }
 
     /**
      * Will be used to generate random numbers.
      */
     private static final Random random = new Random();
-
+    private static ArrayList<Centroid> assignments = new ArrayList<>();
     /**
      * Performs the K-Means clustering algorithm on the given dataset.
      *
@@ -35,7 +35,7 @@ public class KMeans {
      * @param maxIterations Upper bound for the number of iterations.
      * @return K clusters along with their features.
      */
-    public static Map<Centroid, List<Record>> fit(List<Record> records, int k, Distance distance, int maxIterations) {
+    public Map<Centroid, List<Record>> fit(List<Record> records, int k, Distance distance, int maxIterations) {
         applyPreconditions(records, k, distance, maxIterations);
 
         List<Centroid> centroids = randomCentroids(records, k);
@@ -45,10 +45,11 @@ public class KMeans {
         // iterate for a pre-defined number of times
         for (int i = 0; i < maxIterations; i++) {
             boolean isLastIteration = i == maxIterations - 1;
-
+            assignments.clear();
             // in each iteration we should find the nearest centroid for each record
             for (Record record : records) {
-                Centroid centroid = nearestCentroid(record, centroids, distance);
+            	Centroid centroid = nearestCentroid(record, centroids, distance);                       
+                assignments.add(centroid);
                 assignToCluster(clusters, record, centroid);
             }
 
@@ -66,7 +67,11 @@ public class KMeans {
 
         return lastState;
     }
-
+    
+    public ArrayList<Centroid> getAssignments(){
+    	return assignments;
+    }
+    
     /**
      * Move all cluster centroids to the average of all assigned features.
      *

@@ -17,14 +17,18 @@ import com.baeldung.algorithms.kmeans.EuclideanDistance;
 @ShortName("KMeans")
 @Version(1.00f)
 public class KMeansWrapper {
-
+	
+	private static ArrayList<Centroid> assignments = new ArrayList<>();
+	
 	public void Initialize()  {
     
 	}
 	
 	public static Map fit(List<Record> records,int k,int maxIterations){
 		EuclideanDistance distance = new EuclideanDistance();
-		java.util.Map<Centroid, List<Record>> result = KMeans.fit(records, k, distance, maxIterations);
+		KMeans km = new KMeans();
+		java.util.Map<Centroid, List<Record>> result = km.fit(records, k, distance, maxIterations);
+		assignments=km.getAssignments();
 		Map map1 = new Map();
 		map1.Initialize();
 		for (java.util.Map.Entry<Centroid, List<Record>> entry : result.entrySet()){
@@ -38,5 +42,9 @@ public class KMeansWrapper {
 		}
 
 		return map1;
+	}
+	
+	public ArrayList<Centroid> getAssignments(){
+		return assignments;
 	}
 }

@@ -1,13 +1,19 @@
 package pdfbox;
 
-
+import org.apache.pdfbox.pdmodel.PDDocument;
 import org.apache.pdfbox.pdmodel.PDPageContentStream;
 import org.apache.pdfbox.pdmodel.font.*;
 import org.apache.pdfbox.pdmodel.graphics.state.RenderingMode;
 
+import java.io.File;
 import java.io.IOException;
 
 public class SearchablePDFCreator {
+	
+	public static PDFont loadFont(PDDocument doc, String path) throws IOException {
+		PDFont font = PDType0Font.load(doc, new File(path));
+		return font;
+	}
 	
     /**
      * Add text overlay to an existing PDF page
@@ -26,7 +32,7 @@ public class SearchablePDFCreator {
      * @param pdFont - Specify a font for evaluation of the position
      */
     public static void addTextOverlay(PDPageContentStream contentStream,OCRResult result, double pageHeight, PDFont pdFont) throws IOException {
-        addTextOverlay(contentStream,result,pageHeight,PDType1Font.TIMES_ROMAN,1.0);
+        addTextOverlay(contentStream,result,pageHeight,pdFont,1.0);
     }
     /**
      * Add text overlay to an existing PDF page

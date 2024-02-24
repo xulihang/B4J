@@ -8,6 +8,7 @@ import org.apache.pdfbox.pdmodel.graphics.state.RenderingMode;
 import java.io.IOException;
 
 public class SearchablePDFCreator {
+	
     /**
      * Add text overlay to an existing PDF page
      * @param contentStream - PDF content stream
